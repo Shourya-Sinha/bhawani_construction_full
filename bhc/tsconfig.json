@@ -1,0 +1,19 @@
+// {
+//   "extends": "@react-native/typescript-config/tsconfig.json",
+//   "compilerOptions": {
+//     "baseUrl": ".",
+//     "paths": {
+//       "navigation/*": ["src/navigation/*"],
+//       "styles/*": ["src/styles/*"],
+//       "components/*": ["src/components/*"],
+//       "screens/*": ["src/screens/*"],
+//       "utils/*": ["src/utils/*"]
+//     },
+//     "types": ["jest", "react-native"]
+//   },
+//   "exclude": ["node_modules", "babel.config.js"]
+// }
+{
+  "extends": "@react-native/typescript-config/tsconfig.json"
+}
+
