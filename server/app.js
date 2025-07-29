@@ -43,7 +43,8 @@ const allowedOrigins = [
     "http://localhost:5000",
     "http://localhost:3000",
     "http://localhost:5173",
-    "http://localhost:7000"
+    "http://localhost:7000",
+    "http://10.0.2.2:5000",
 ];
 
 app.use(cors({
@@ -78,7 +79,8 @@ app.use((req, res, next) => {
 });
 
 app.get("/shawn-shoaurya-csrf-token-protection-v1", generateCsrfToken, (req, res) => {
-  res.json({ csrfToken: res.locals.csrfToken });
+    console.log("CSRF route hit");
+    res.json({ csrfToken: res.locals.csrfToken });
 });
 
 app.use((req, res, next) => {

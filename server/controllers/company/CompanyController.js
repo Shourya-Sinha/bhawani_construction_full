@@ -89,7 +89,7 @@ export const updateCompanyEmail = async (req, res) => {
         }
 
         const passwordValid = await user.comparePassword(currentPassword);
-        if (!passwordValid) return errors.unauthorized(res, "Incorrect password");
+        if (!passwordValid) return errors.unauthenticated(res, "Incorrect password");
 
         const deviceId = createDeviceFingerprint(req);
         const isKnownDevice = user.deviceFingerPrint?.some(d => d.deviceId === deviceId);
@@ -321,7 +321,7 @@ export const respondToBidByCompany = async (req, res) => {
         const project = bid.project;
 
         if (project.company._id.toString() !== companyId) {
-            return errors.unauthorized(res, "You are not authorized to respond to this bid");
+            return errors.unauthenticated(res, "You are not authorized to respond to this bid");
         }
 
         // If company counters the offer
@@ -362,7 +362,7 @@ export const respondToBidByCompany = async (req, res) => {
 export const getAllProjects = async (req, res) => {
     try {
         const companyId = req.userId;
-                const projects = await Project.find({ company: companyId })
+        const projects = await Project.find({ company: companyId })
             .populate({
                 path: 'bids',
                 select: 'offeredAmount status createdAt'
@@ -377,7 +377,7 @@ export const getAllProjects = async (req, res) => {
             })
             .sort({ createdAt: -1 });
 
-            const formattedProjects = projects.map(project => ({
+        const formattedProjects = projects.map(project => ({
             // Project basic info
             projectId: project._id,
             projectName: project.projectName,
@@ -387,7 +387,7 @@ export const getAllProjects = async (req, res) => {
             status: project.status,
             isPublished: project.isPublished,
             createdAt: project.createdAt,
-            
+
             // Project details
             carpetArea: project.details?.carpetArea,
             location: project.details?.location,
@@ -396,17 +396,17 @@ export const getAllProjects = async (req, res) => {
             deadline: project.deadline,
             bidClosingDate: project.bidClosingDate,
             estimatedDuration: project.estimatedDuration,
-            
+
             // Files and attachments
             projectFile: project.projectFile,
             attachments: project.attachments,
             requirements: project.requirements,
-            
+
             // Company info
             companyName: project.company.companyName,
             companyEmail: project.company.email,
             companyPhone: project.company.phone,
-            
+
             // Bids summary
             bidsCount: project.bids.length,
             bids: project.bids.map(bid => ({
@@ -415,16 +415,16 @@ export const getAllProjects = async (req, res) => {
                 status: bid.status,
                 createdAt: bid.createdAt
             })),
-            
+
             // Assigned workers
             assignedWorkers: project.assignedTo.map(worker => ({
                 workerId: worker._id,
                 fullName: worker.fullName,
                 email: worker.email,
-                gAuthName:worker.googleName,
-                verifiedByAdmin:worker.workerVerified
+                gAuthName: worker.googleName,
+                verifiedByAdmin: worker.workerVerified
             })),
-            
+
             // Ratings and engagement
             averageRating: project.averageRating,
             views: project.views,
@@ -547,7 +547,7 @@ export const getBidById = async (req, res) => {
             });
         if (!bid) return errors.notFound(res, 'Bid not found');
         if (bid.project.company.toString() !== companyId)
-            return errors.unauthorized(res, 'Not authorized');
+            return errors.unauthenticated(res, 'Not authorized');
         const responseData = {
             // Bid information
             bidId: bid._id,
@@ -580,9 +580,81 @@ export const getBidById = async (req, res) => {
             proposedById: bid.proposedBy?._id,
             proposedByEmail: bid.proposedBy?.email,
         };
-        return apiResponse(200, "Success", responseData);
+        return apiResponse(200, "Success", {data:responseData});
     } catch (e) {
         LogError("Fetch Bids", err);
         return errors.serverError(res, "Failed fetch Bid");
+    }
+};
+
+// Get Profiule
+export const getCompanyProfile = async (req, res) => {
+    try {
+        const companyId = req.userId;
+
+        // Get company info
+        const company = await Company.findById(companyId).lean();
+        if (!company) {
+            return errors.notFound(res, 'Company not found');
+        }
+
+        // Get all projects related to the company
+        const projects = await Project.find({ company: companyId }).lean();
+
+        const totalProjects = projects.length;
+
+        // Status counts: open, reviewing, assigned, completed
+        const statusCounts = projects.reduce((acc, project) => {
+            const status = project.status || 'unknown';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Priority counts: low, medium, high
+        const priorityCounts = projects.reduce((acc, project) => {
+            const priority = project.priorityLevel || 'unknown';
+            acc[priority] = (acc[priority] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Category counts: residential, commercial, etc.
+        const categoryCounts = projects.reduce((acc, project) => {
+            const category = project.category || 'other';
+            acc[category] = (acc[category] || 0) + 1;
+            return acc;
+        }, {});
+
+        // Likes & Dislikes counts from company schema
+        const likesCount = company.likesList?.length || 0;
+        const dislikesCount = company.dislikesList?.length || 0;
+
+        // Final profile object
+        const profile = {
+            companyName: company.companyName,
+            userName: company.userName,
+            email: company.email,
+            phone: company.phone,
+            companyAddress: company.companyAddress,
+            companyLogo: company.companyLogo,
+            isVerified: company.isVerified,
+            companyVerified: company.companyVerified,
+            companyStatus: company.companyStatus,
+            createdAt: company.createdAt,
+            averageRating: company.averageRating,
+            totalRatings: company.ratings?.length || 0,
+            totalLikes: likesCount,
+            totalDislikes: dislikesCount,
+            projectStats: {
+                totalProjects,
+                ...statusCounts,
+                priorities: priorityCounts,
+                categories: categoryCounts,
+            },
+        };
+
+        return apiResponse(res,200, "Data fetched Successfully", { data: profile });
+    } catch (error) {
+        console.error('[CompanyProfileError]', error);
+        return errors.serverError(res, 'Server Error' );
     }
 };

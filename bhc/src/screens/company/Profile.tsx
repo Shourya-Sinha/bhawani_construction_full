@@ -1,12 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import { colors } from '../../styles/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from 'navigation/types';
+import { RootStackParamList } from '../../navigation/types';
+import { useAppDispatch, useAppSelector } from '../../redux/store';
+import { getandsetCompanyinfo } from '../../redux/slices/Company/companyAllOtherSlice';
+import { CompanyLogout } from '../../redux/slices/Company/companyAuthSlice';
 
 type ProfileScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -14,11 +26,35 @@ type ProfileScreenNavigationProp = StackNavigationProp<
 >;
 
 const CompanyProfile = () => {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector(state => state.companyAuth);
+  const companyInfo = useAppSelector(state => state.companyOther);
+  const [refreshing, setRefreshing] = useState(false);
+  const fetchData = useCallback(async () => {
+    try {
+      await dispatch(getandsetCompanyinfo());
+    } catch (error) {
+      console.log('Error fetching profile info:', error);
+      Alert.alert('Something went wrong while fetching company info');
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
+
+  console.log('company info in profile page', companyInfo);
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [companyData, setCompanyData] = useState({
-    name: 'ConstructPro Solutions',
+    name: user?.companyName || 'N/A',
     tagline: 'Building the future, one project at a time',
-    email: 'contact@constructpro.com',
+    email: user?.email || 'N/A',
     phone: '+91 9876543210',
     address: '123 Construction Ave, Build City, IN 560001',
     website: 'www.constructpro.com',
@@ -27,7 +63,8 @@ const CompanyProfile = () => {
     rating: '4.7',
     projectsCompleted: '48',
     activeProjects: '5',
-    description: 'ConstructPro Solutions is a leading construction management company with over 15 years of experience. We specialize in commercial and residential projects, delivering high-quality results on time and within budget.',
+    description:
+      'ConstructPro Solutions is a leading construction management company with over 15 years of experience. We specialize in commercial and residential projects, delivering high-quality results on time and within budget.',
   });
 
   const [stats, setStats] = useState([
@@ -45,7 +82,7 @@ const CompanyProfile = () => {
     'Architectural Design',
     'Renovation & Remodeling',
     'Quality Assurance',
-    'Safety Compliance'
+    'Safety Compliance',
   ]);
 
   useEffect(() => {
@@ -56,21 +93,33 @@ const CompanyProfile = () => {
         setCompanyData({
           ...companyData,
           rating: '4.8',
-          activeProjects: '6'
+          activeProjects: '6',
         });
       }, 1000);
     };
-    
+
     fetchData();
   }, []);
 
   const handleEditProfile = () => {
     navigation.navigate('EditCompanyProfile');
   };
+  const handleLogout=()=>{
+    try {
+      dispatch(CompanyLogout());
+    } catch (error) {
+      Alert.alert("Something Problem")
+    }
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Profile Header */}
         <GlassCard style={styles.headerCard}>
           <View style={styles.headerContent}>
@@ -82,17 +131,19 @@ const CompanyProfile = () => {
                 <Icon name="verified" size={18} color="#4CAF50" />
               </View>
             </View>
-            
+
             <Text style={styles.companyName}>{companyData.name}</Text>
             <Text style={styles.tagline}>{companyData.tagline}</Text>
-            
+
             <View style={styles.ratingContainer}>
               <Icon name="star" size={20} color="#FFD700" />
-              <Text style={styles.ratingText}>{companyData.rating} (128 Reviews)</Text>
+              <Text style={styles.ratingText}>
+                {companyData.rating} (128 Reviews)
+              </Text>
             </View>
           </View>
         </GlassCard>
-        
+
         {/* Stats Grid */}
         <GlassCard style={styles.statsCard}>
           <Text style={styles.sectionTitle}>Company Stats</Text>
@@ -105,25 +156,29 @@ const CompanyProfile = () => {
             ))}
           </View>
         </GlassCard>
-        
+
         {/* Contact Information */}
         <GlassCard style={styles.card}>
+        <GradientButton title="Logout" onPress={handleLogout} />
           <Text style={styles.sectionTitle}>Contact Information</Text>
-          
+
           <InfoItem icon="email" label={companyData.email} />
           <InfoItem icon="phone" label={companyData.phone} />
           <InfoItem icon="location-on" label={companyData.address} />
           <InfoItem icon="web" label={companyData.website} />
           <InfoItem icon="event" label={`Est. ${companyData.established}`} />
-          <InfoItem icon="people" label={`${companyData.employees} employees`} />
+          <InfoItem
+            icon="people"
+            label={`${companyData.employees} employees`}
+          />
         </GlassCard>
-        
+
         {/* About Company */}
         <GlassCard style={styles.card}>
           <Text style={styles.sectionTitle}>About Us</Text>
           <Text style={styles.description}>{companyData.description}</Text>
         </GlassCard>
-        
+
         {/* Services */}
         <GlassCard style={styles.card}>
           <Text style={styles.sectionTitle}>Our Services</Text>
@@ -133,17 +188,17 @@ const CompanyProfile = () => {
             ))}
           </View>
         </GlassCard>
-        
+
         {/* Action Buttons */}
         <View style={styles.buttonRow}>
-          <GradientButton 
-            title="Edit Profile" 
+          <GradientButton
+            title="Edit Profile"
             onPress={handleEditProfile}
-            style={styles.button} 
+            style={styles.button}
           />
-          <GradientButton 
-            title="Share Profile" 
-            onPress={() => {}} 
+          <GradientButton
+            title="Share Profile"
+            onPress={() => {}}
             style={[styles.button, styles.secondaryButton]}
             colors={['transparent', 'transparent']}
             textStyle={{ color: colors.primary }}

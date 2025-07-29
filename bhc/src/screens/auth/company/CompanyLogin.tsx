@@ -1,24 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import { colors } from '../../../styles/colors';
-import { glassStyles } from '../../../styles/glassmorphism';
 import GradientButton from '../../../components/GradientButton';
+import { useAppDispatch, useAppSelector } from '../../../redux/store';
+import { LoginCompanySlice } from '../../../redux/slices/Company/companyAuthSlice';
 
 const CompanyLogin = ({ navigation }: any) => {
+  const { isLoggedIn } = useAppSelector(state => state.companyAuth);
+  console.log("check isloggedin state in login page:-",isLoggedIn);
+  const [loading, setLoading] = useState(false);
+  const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigation.navigate('CompanyDashboard');
+    }
+  }, [isLoggedIn]);
+
+  const handleLogin = async () => {
     // Login logic
-    navigation.navigate('CompanyDashboard');
+    let loginIdentifier = email.trim();
+    if (
+      !loginIdentifier.includes('@') &&
+      !loginIdentifier.endsWith('.BHCFamily')
+    ) {
+      loginIdentifier = `${loginIdentifier}.BHCFamily`;
+    }
+    console.log('Sending login as:', loginIdentifier);
+    if (!loginIdentifier || !password) {
+      Alert.alert('Validation Error', 'Email/Username and Password required');
+      return;
+    }
+    try {
+      setLoading(true);
+      const formValues = {
+        email: loginIdentifier,
+        password,
+      };
+      const result = await dispatch(LoginCompanySlice(formValues));
+
+      if (result?.success) {
+        navigation.navigate('CompanyDashboard');
+      } else {
+        Alert.alert(result?.message || 'Login Error');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert(error?.message || 'Login Error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Company Login</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -27,7 +75,7 @@ const CompanyLogin = ({ navigation }: any) => {
           value={email}
           onChangeText={setEmail}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -36,18 +84,22 @@ const CompanyLogin = ({ navigation }: any) => {
           value={password}
           onChangeText={setPassword}
         />
-        
-        <GradientButton 
-          title="Login" 
-          onPress={handleLogin} 
-          style={styles.button} 
+
+        <GradientButton
+          title="Login"
+          onPress={handleLogin}
+          style={styles.button}
+          loading={loading}
+          disabled={loading || !email || !password}
         />
-        
+
         <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
           <Text style={styles.link}>Forgot Password?</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity onPress={() => navigation.navigate('CompanyRegister')}>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CompanyRegister')}
+        >
           <Text style={styles.link}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </GlassCard>

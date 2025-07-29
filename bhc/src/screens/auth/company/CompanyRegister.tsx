@@ -1,26 +1,70 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import { colors } from '../../../styles/colors';
-import { glassStyles } from '../../../styles/glassmorphism';
 import GradientButton from '../../../components/GradientButton';
+import { RegisterCompanySlice } from '../../../redux/slices/Company/companyAuthSlice';
+import { useAppDispatch, useAppSelector } from '../../../redux/store';
 
 const CompanyRegister = ({ navigation }: any) => {
+  const { isLoggedIn } = useAppSelector(state => state.companyAuth);
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [userName, setuserName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigation.navigate('CompanyDashboard');
+    }
+  }, [isLoggedIn]);
+
+  const handleRegister = async () => {
     // Registration logic
-    navigation.navigate('CompanyDashboard');
+    if (!name || !email || !userName || !password || !confirmPassword) {
+      Alert.alert('Validation Error', 'Please fill all the fields');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Password do not match');
+      return;
+    }
+    const formValues = {
+      email,
+      password,
+      companyName: name,
+      userName,
+    };
+    try {
+      setLoading(true);
+      const result = await dispatch(RegisterCompanySlice(formValues));
+      if (result.success) {
+        navigation.navigate('CompanyVerifyEmail', { email });
+      } else {
+        Alert.alert('Registration Failed', result.message || 'Try again later');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong during registration');
+    } finally {
+      setLoading(false); // 🧹 Clean and guaranteed stop loader
+    }
   };
 
   return (
     <View style={styles.container}>
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Company Registration</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="Company Name"
@@ -28,7 +72,14 @@ const CompanyRegister = ({ navigation }: any) => {
           value={name}
           onChangeText={setName}
         />
-        
+        <TextInput
+          style={styles.input}
+          placeholder="User Name"
+          placeholderTextColor={colors.textSecondary}
+          value={userName}
+          onChangeText={setuserName}
+        />
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -37,7 +88,7 @@ const CompanyRegister = ({ navigation }: any) => {
           value={email}
           onChangeText={setEmail}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -46,7 +97,7 @@ const CompanyRegister = ({ navigation }: any) => {
           value={password}
           onChangeText={setPassword}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Confirm Password"
@@ -55,13 +106,22 @@ const CompanyRegister = ({ navigation }: any) => {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
-        
-        <GradientButton 
-          title="Register" 
-          onPress={handleRegister} 
-          style={styles.button} 
+
+        <GradientButton
+          title="Register"
+          onPress={handleRegister}
+          style={styles.button}
+          loading={loading}
+          disabled={
+            loading ||
+            !email ||
+            !password ||
+            !name ||
+            !userName ||
+            !confirmPassword
+          }
         />
-        
+
         <TouchableOpacity onPress={() => navigation.navigate('CompanyLogin')}>
           <Text style={styles.link}>Already have an account? Login</Text>
         </TouchableOpacity>

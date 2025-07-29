@@ -83,7 +83,7 @@ interface StateType {
     averageRating: number;
     likesDislikes: CompanyLikesDislikes;
     allBids: BidType[];
-    allProjects:[];
+    allProjects: [];
 }
 
 const initialState: StateType = {
@@ -102,9 +102,10 @@ const initialState: StateType = {
 };
 
 const slice = createSlice({
-    name: 'companyAuth',
+    name: 'companyOther',
     initialState,
     reducers: {
+        resetState: () => initialState,
         updateBidInList(state, action: { payload: { bidId: string; updatedData: Partial<BidType> } }) {
             const index = state.allBids.findIndex(bid => bid.bidId === action.payload.bidId);
             if (index != -1) {
@@ -122,6 +123,7 @@ const slice = createSlice({
             state.isLoading = action.payload.isLoading;
         },
         updateCompanyInfo(state, action: { payload: Record<string, any> }) {
+            console.log("slice called when data fetched",action.payload)
             state.companyInfo = { ...state.companyInfo, ...action.payload }
         },
         updateAverageRatings(state, action: { payload: number }) {
@@ -160,7 +162,7 @@ const slice = createSlice({
 
 export default slice.reducer;
 export const {
-    getandsetAllProjectsofCompany, updateBidInList, getandSetAllBids, setAllCompanyRatings, addUpdateCompanyRating, decrementDislikes, incrementDislikes, decrementLikes, updateIsLoading, updateCompanyInfo, updateAverageRatings, setLikesDislikes, incrementLikes
+    resetState,getandsetAllProjectsofCompany, updateBidInList, getandSetAllBids, setAllCompanyRatings, addUpdateCompanyRating, decrementDislikes, incrementDislikes, decrementLikes, updateIsLoading, updateCompanyInfo, updateAverageRatings, setLikesDislikes, incrementLikes
 } = slice.actions;
 
 interface CompanyProfileUpdate {
@@ -183,6 +185,23 @@ interface responseONBID {
     counterOffer: number,
     bidId: string
 }
+
+export function getandsetCompanyinfo() {
+    return async (dispatch: any) => {
+        dispatch(updateIsLoading({ isLoading: true, error: false }));
+        try {
+            const response = await axiosInstance.get(`${companyBaseUrl}/GET_COMPANY_ALL_BASIC_INFO`);
+            dispatch(updateCompanyInfo(response?.data?.data?.data));
+            console.log("info data in slice funciton",response.data);
+            dispatch(updateIsLoading({ isLoading: false, error: false }))
+        } catch (error) {
+            dispatch(updateIsLoading({ isLoading: false, error: true }));
+            return Promise.reject(error);
+        }
+    }
+}
+
+
 
 export function FetchSingleProjects(projectId: string) {
     return async (dispatch: any) => {

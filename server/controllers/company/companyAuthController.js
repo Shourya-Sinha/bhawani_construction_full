@@ -4,18 +4,18 @@ import { createDeviceFingerprint, getClientIP } from "../../utils/DeviceFingerPr
 import filterObj from "../../utils/Filter.js";
 import { GenerateOtp } from "../../utils/generateOTP.js";
 import { apiResponse, errors } from "../../utils/GlobalErrorHandler.js";
-import { LogError } from "../../utils/GlobalLogging.js";
+import { LogData, LogError } from "../../utils/GlobalLogging.js";
 import { sendOTPWithLimit, tokenGeneratorForCompany } from "./companyMiddleware.js";
 
 
 // Custom Company Register
 export const CompanyCustomRegister = async function (req, res, next) {
     try {
-        const filteredBody = filterObj(req.body, 'email', 'password','comnpanyName','userName');
-        const { email, password ,comnpanyName,userName} = filteredBody;
+        const filteredBody = filterObj(req.body, 'email', 'password', 'companyName', 'userName');
+        const { email, password, companyName, userName } = filteredBody;
 
         // INPUT Validation
-        if (!email || !password || !comnpanyName || !userName) {
+        if (!email || !password || !companyName || !userName) {
             return errors.badRequest(res, 'All field required')
         }
         // validate password strength
@@ -35,14 +35,14 @@ export const CompanyCustomRegister = async function (req, res, next) {
             }
             user.password = password;
             user.userName = userName;
-            user.comnpanyName=comnpanyName
+            user.comnpanyName = companyName
             await sendOTPWithLimit({ user, email, purpose: 'register', req });
             return apiResponse(res, 201, 'OTP sent for verification');
         }
         // New user case
         const newOTP = GenerateOtp();
         const newUser = new Company({
-            comnpanyName,
+            companyName,
             email,
             userName,
             password,
@@ -146,10 +146,11 @@ export const CompanyVerifyEmail = async (req, res) => {
         });
 
         return apiResponse(res, 201, 'Email Verified successfully', {
-                email: user.email,
-                userId: user._id,
-                userName:user.userName,
-                companyName:user.companyName,
+            email: user.email,
+            userId: user._id,
+            userName: user.userName || null,
+            companyName: user.companyName || null,
+            token,newToken,
         });
 
     } catch (error) {
@@ -329,7 +330,14 @@ export const CompanyLogin = async (req, res) => {
             return errors.badRequest(res, "Password length must be at least 8 characters");
         }
         // find user
-        const user = await Company.findOne({ email });
+        let user;
+        // const user = await Company.findOne({ email });
+        if (email.includes("@")) {
+            user = await Company.findOne({ email });
+        } else {
+            const fullUsername = email.endsWith(".BHCFamily") ? email : `${email}.BHCFamily`;
+            user = await Company.findOne({ userName: fullUsername });
+        }
         if (!user) {
             return errors.forbidden(res, "Invalid credentials")
         }
@@ -391,7 +399,8 @@ export const CompanyLogin = async (req, res) => {
             email: user.email,
             userName: user.userName || null,
             companyName: user.companyName || null,
-            userId:user._id
+            userId: user._id,
+            token:token,
         });
     } catch (error) {
         if (error.name === "ValidationError") {

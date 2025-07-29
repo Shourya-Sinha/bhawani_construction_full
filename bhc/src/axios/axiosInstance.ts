@@ -1,7 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const baseUrl = "http://localhost:5000/api/v1/";
+const baseUrl = "http://10.0.2.2:5000/api/v1";
+const csrfTokenUrl = "http://10.0.2.2:5000/";
 
 export const companyBaseUrl = `${baseUrl}/COMPANY`;
 export const workerBaseUrl = `${baseUrl}/WORKER`;
@@ -21,14 +22,15 @@ axiosInstance.interceptors.request.use(
     async (config) => {
         try {
             const token = await AsyncStorage.getItem('auth_token');
+            const csrfToken = await AsyncStorage.getItem('csrfToken');
             if (token) {
-                console.log('Token in interceptors:', token);
+                // console.log('Token in interceptors:', token);
                 config.headers.Authorization = `Bearer ${token}`;  // Attach the token to Authorization header
                 config.headers['Cookie'] = token;  // Attach the token to Authorization header
             }
             // Attach CSRF token
             try {
-                const response = await axios.get(`${baseUrl}shawn-shoaurya-csrf-token-protection-v1`, {
+                const response = await axios.get(`${csrfTokenUrl}shawn-shoaurya-csrf-token-protection-v1`, {
                     withCredentials: true,
                 });
                 const csrfToken = response.data.csrfToken;

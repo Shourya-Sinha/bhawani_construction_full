@@ -41,7 +41,7 @@ const startServer = async () => {
 
         // 3. Start Express server
         console.log('[6] Starting HTTP server...');
-        const server = app.listen(port, () => {
+        const server = app.listen(port, '0.0.0.0', () => {
             console.log(`
             🚀 Server ready at: http://localhost:${port}
             ⏱️  ${new Date().toLocaleString()}

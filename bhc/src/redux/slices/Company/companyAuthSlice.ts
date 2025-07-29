@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance, { companyBaseUrl } from "../../../axios/axiosInstance.ts";
 import { persistor } from "../../store.ts";
+import { resetState } from "./companyAllOtherSlice.ts";
 
 const initialState = {
     isLoggedIn: false,
@@ -43,7 +44,7 @@ interface LoginFormValues {
     password: string;
 }
 interface RegisterFormValues {
-    email: String, password: String, comnpanyName: String, userName: String
+    email: String, password: String, companyName: String, userName: String
 }
 interface VerifyEmailFormValues {
     email: String,
@@ -65,10 +66,16 @@ export function LoginCompanySlice(formValues: LoginFormValues) {
 
         try {
             const response = await axiosInstance.post(`${companyBaseUrl}/COMPANY_LOGIN`, formValues);
+            const token = response?.data?.data?.token;
 
+            console.log("start setiing token in asycstorage", token)
+            if (token) {
+                await AsyncStorage.setItem('auth_token', token); // 👉 Ensure this happens first
+                console.log('Saved token to AsyncStorage:-', token);
+            }
+            console.log("finish setiing token in asycstorage");
             dispatch(updateIsLoading({ isLoading: false, error: false }));
             dispatch(login({ user: response?.data?.data, isLoggedIn: true }));
-
             return response.data;
         } catch (error) {
             dispatch(updateIsLoading({ isLoading: false, error: true }));
@@ -86,7 +93,7 @@ export function RegisterCompanySlice(formValues: RegisterFormValues) {
 
             dispatch(updateIsLoading({ isLoading: false, error: false }));
 
-            return true;
+            return response.data;
         } catch (error) {
             dispatch(updateIsLoading({ isLoading: false, error: true }));
             return Promise.reject(error);
@@ -102,7 +109,7 @@ export function VerifyEmailCompanySlice(formValues: VerifyEmailFormValues) {
             const response = await axiosInstance.post(`${companyBaseUrl}/COMPANY_VERIFY_EMAIL`, formValues);
             dispatch(login({ user: response?.data?.data, isLoggedIn: true }));
             dispatch(updateIsLoading({ isLoading: false, error: false }));
-
+            console.log("response in register complany slice", response.data);
             return response.data;
         } catch (error) {
             dispatch(updateIsLoading({ isLoading: false, error: true }));
@@ -162,19 +169,30 @@ export function ResetPWDCompanySlice(formValues: ResetPWDFormValues) {
     }
 }
 
+const cleanupAuth = async (dispatch: any) => {
+    await AsyncStorage.multiRemove(['auth_token', 'csrf_token']);
+    await persistor.purge();
+    dispatch(logout());
+};
+
 export function CompanyLogout() {
     return async (dispatch: any) => {
         dispatch(updateIsLoading({ isLoading: true, error: false }));
         try {
-            const response = await axiosInstance.post(`${companyBaseUrl}/COMPANY_LOGOUT`);
-            await AsyncStorage.multiRemove(['auth_token', 'csrf_token']); // Clean multiple keys if used
-            await persistor.purge();
+            await axiosInstance.post(`${companyBaseUrl}/COMPANY_LOGOUT`);
+            // await AsyncStorage.multiRemove(['auth_token', 'csrf_token']); // Clean multiple keys if used
+            // await persistor.purge();
 
-            dispatch(logout())
-            return true;
-        } catch (error) {
-            dispatch(updateIsLoading({ isLoading: false, error: true }));
-            return Promise.reject(error);
+            // dispatch(logout())
+            // return response.data;
+        } catch (error: any) {
+            console.warn("Server logout failed, continuing cleanup:", error?.message);
+            // dispatch(updateIsLoading({ isLoading: false, error: true }));
+            // return Promise.reject(error);
+        } finally {
+            await cleanupAuth(dispatch);
+            dispatch(resetState()); 
+            dispatch(updateIsLoading({ isLoading: false, error: false }));
         }
     }
 }

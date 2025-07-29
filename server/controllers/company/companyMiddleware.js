@@ -38,7 +38,7 @@ export const sendOTPWithLimit = async ({ user, email, purpose, req }) => {
     }
 
     const otp = GenerateOtp();
-    LogData("SendotpWithLimit",otp)
+    LogData("SendotpWithLimit", otp)
 
     try {
         await Promise.race([
@@ -80,15 +80,17 @@ export const sendOTPWithLimit = async ({ user, email, purpose, req }) => {
 
 export const protectCompanyRoute = async (req, res, next) => {
     try {
-        const token = req.cookies?.auth_token;
-
+        const token = req.cookies?.auth_token || req.headers.Authorization?.replace('Bearer ', '') || req.headers.authorization?.replace('Bearer ', '');
+        console.log("token in middleware ",token);
         if (!token) {
             return errors.unauthorized(res, 'Not authenticated. Please login.');
         }
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET_FOR_COMPANY); // Make sure your secret matches
-        const user = await Company.findById(decoded.id).select('_id isVerified');
+        // console.log("decoded data in middleware ",decoded);
+        const user = await Company.findById(decoded.userId).select('_id isVerified');
+
 
         if (!user) {
             return errors.unauthorized(res, 'User not found or token invalid');

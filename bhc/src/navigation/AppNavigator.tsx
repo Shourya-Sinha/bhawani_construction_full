@@ -18,8 +18,9 @@ import MainTabNavigator from './MainTabNavigator';
 import CompanyTabNavigator from './CompanyTabNavigator';
 import WorkerTabNavigator from './WorkerTabNavigator';
 import EditCompanyProfile from '../screens/company/EditCompanyProfile';
-import { SafeAreaView, Text, View } from 'react-native';
+import {Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import VerifyEmail from '../screens/auth/company/VerifyEmail';
 
 const Stack = createStackNavigator();
 
@@ -48,6 +49,7 @@ const AppNavigator = () => {
           <Stack.Screen name="CompanyRegister" component={CompanyRegister} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
           <Stack.Screen name="ResetPassword" component={ResetPassword} />
+          <Stack.Screen name="CompanyVerifyEmail" component={VerifyEmail} />
 
           {/* Worker Auth */}
           <Stack.Screen name="WorkerLogin" component={WorkerLogin} />

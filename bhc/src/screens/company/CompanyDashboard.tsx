@@ -1,18 +1,84 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import { colors } from '../../styles/colors';
 import ProjectStatus from '../../components/ProjectStatus';
+import { useAppDispatch, useAppSelector } from '../../redux/store';
+import { getandsetCompanyinfo } from '../../redux/slices/Company/companyAllOtherSlice';
+import {jwtDecode} from 'jwt-decode';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CompanyLogout } from '../../redux/slices/Company/companyAuthSlice';
 
-const CompanyDashboard = () => {
+const CompanyDashboard = ({ navigation }: any) => {
+  const dispatch = useAppDispatch();
+  const { user, isLoggedIn } = useAppSelector(state => state.companyAuth);
+  const [refreshing, setRefreshing] = useState(false);
+  const fetchData = useCallback(async () => {
+    try {
+      await dispatch(getandsetCompanyinfo());
+    } catch (error) {
+      console.log('Error fetching profile info:', error);
+      Alert.alert('Something went wrong while fetching company info');
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, isLoggedIn]);
+  useEffect(() => {
+    const checkTokenExpiry = async () => {
+      try {
+        const token = await AsyncStorage.getItem('auth_token');// or AsyncStorage for React Native
+        if (token) {
+          const decoded: any = jwtDecode(token);
+          const currentTime = Date.now() / 1000;
+          if (decoded.exp < currentTime) {
+            dispatch(CompanyLogout());
+            navigation.navigate('CompanyLogin');
+          }
+        }
+      } catch (err) {
+        console.log('Token decode error:', err);
+        dispatch(CompanyLogout());
+        navigation.navigate('CompanyLogin');
+      }
+    };
+
+    checkTokenExpiry();
+  }, [dispatch, navigation]);
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigation.navigate('CompanyLogin');
+    }
+  }, [isLoggedIn]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <GlassCard style={styles.headerCard}>
-          <Text style={styles.title}>Company Dashboard</Text>
-          <Text style={styles.subtitle}>Welcome back, ConstructPro!</Text>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.subtitle}>
+            Welcome back, {user?.companyName || null}!
+          </Text>
         </GlassCard>
-        
+
         <GlassCard style={styles.statsCard}>
           <View style={styles.statRow}>
             <StatItem value="5" label="Active Projects" />
@@ -23,27 +89,15 @@ const CompanyDashboard = () => {
             <StatItem value="₹1.2M" label="Revenue" />
           </View>
         </GlassCard>
-        
+
         <GlassCard style={styles.projectCard}>
           <Text style={styles.sectionTitle}>Recent Projects</Text>
-          
-          <ProjectItem 
-            name="Office Building" 
-            status="running" 
-            progress={65} 
-          />
-          
-          <ProjectItem 
-            name="Shopping Mall" 
-            status="completed" 
-            progress={100} 
-          />
-          
-          <ProjectItem 
-            name="Residential Tower" 
-            status="stuck" 
-            progress={30} 
-          />
+
+          <ProjectItem name="Office Building" status="running" progress={65} />
+
+          <ProjectItem name="Shopping Mall" status="completed" progress={100} />
+
+          <ProjectItem name="Residential Tower" status="stuck" progress={30} />
         </GlassCard>
       </ScrollView>
     </View>
@@ -57,10 +111,14 @@ const StatItem = ({ value, label }: { value: string; label: string }) => (
   </View>
 );
 
-const ProjectItem = ({ name, status, progress }: { 
-  name: string; 
-  status: string; 
-  progress: number; 
+const ProjectItem = ({
+  name,
+  status,
+  progress,
+}: {
+  name: string;
+  status: string;
+  progress: number;
 }) => (
   <View style={styles.projectItem}>
     <Text style={styles.projectName}>{name}</Text>

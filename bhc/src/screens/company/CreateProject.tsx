@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TextInput, ScrollView } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import { colors } from '../../styles/colors';
-import { glassStyles } from '../../styles/glassmorphism';
 
 const CreateProject = ({ navigation }: any) => {
   const [projectName, setProjectName] = useState('');

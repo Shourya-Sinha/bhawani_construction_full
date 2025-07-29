@@ -1,6 +1,9 @@
 // csrfMiddleware.js
 import crypto from "crypto";
+import dotenv from 'dotenv';
+dotenv.config();
 
+const isProd = process.env.NODE_ENV === "production";
 const CSRF_COOKIE_NAME = "csrfToken";
 const CSRF_HEADER_NAME = "x-csrf-token";
 
@@ -9,8 +12,8 @@ export function generateCsrfToken(req, res, next) {
 
   res.cookie(CSRF_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProd,
+    sameSite: isProd ? "strict" : "lax",
     maxAge: 3600000, // 1 hour
   });
 
@@ -19,6 +22,10 @@ export function generateCsrfToken(req, res, next) {
 }
 
 export function verifyCsrfToken(req, res, next) {
+    if (process.env.NODE_ENV !== "production") {
+    // Disable CSRF check in dev
+    return next();
+  }
   const tokenFromCookie = req.cookies[CSRF_COOKIE_NAME];
   const tokenFromHeader =
     req.headers["x-csrf-token"] || req.headers["X-CSRF-Token"];

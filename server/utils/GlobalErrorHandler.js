@@ -17,6 +17,8 @@ export const errors = {
         apiResponse(res, 400, message, null, errors),
     unauthenticated: (res, message = 'Authentication required', errors = null) =>
         apiResponse(res, 401, message, null, errors),
+    unauthorized: (res, message = 'Authentication required', errors = null) =>
+        apiResponse(res, 401, message, null, errors),
     forbidden: (res, message = 'You are not authorized to do this', errors = null) =>
         apiResponse(res, 403, message, null, errors),
     serverError: (res, error = null) =>

@@ -12,6 +12,7 @@ export type RootStackParamList = {
   CompanyDashboard: undefined;
   WorkerDashboard: undefined;
   EditCompanyProfile: undefined; // Add this line
+  CompanyVerifyEmail:undefined;
   // ... other routes
 };
 

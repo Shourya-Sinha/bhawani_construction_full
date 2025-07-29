@@ -1,6 +1,6 @@
 
 import { CompanyCustomRegister, CompanyForgotPassword, CompanyLogin, CompanyLogout, CompanyResendOTP, CompanyResetPassword, CompanyVerifyEmail } from "../controllers/company/companyAuthController.js";
-import { addComapanyRating, getAllBids, getAllProjects, getBidById, getCompanyLikesDislikes, getCompanyRatings, getProjectById, respondToBidByCompany, toggleDislikeCompany, toggleLikeCompany, updateCompanyEmail, updateCompanyLogo, updateCompanyProfileDetails } from "../controllers/company/CompanyController.js";
+import { addComapanyRating, getAllBids, getAllProjects, getBidById, getCompanyLikesDislikes, getCompanyProfile, getCompanyRatings, getProjectById, respondToBidByCompany, toggleDislikeCompany, toggleLikeCompany, updateCompanyEmail, updateCompanyLogo, updateCompanyProfileDetails } from "../controllers/company/CompanyController.js";
 import { checkCompanyApprovalStatus, protectCompanyRoute } from "../controllers/company/companyMiddleware.js";
 import router, { RGET, RPOST, RPUT } from "../utils/GlobalRouter.js";
 
@@ -24,6 +24,7 @@ RGET("REACTION_STATS/:companyId",protectCompanyRoute,getCompanyLikesDislikes);
 RGET("COMPANY_ALL_PROJECT",protectCompanyRoute,checkCompanyApprovalStatus,getAllProjects);
 RGET("COMPANY_ALL_BIDS",protectCompanyRoute,checkCompanyApprovalStatus,getAllBids);
 RGET("COMPANY_GET_SINGLE_BID/:bidId",protectCompanyRoute,checkCompanyApprovalStatus,getBidById);
+RGET("GET_COMPANY_ALL_BASIC_INFO",protectCompanyRoute,getCompanyProfile);
 
 // Company After Auth Main Controller wiht Approval
 RPUT("COMPANY_UPDATE_EMAIL",protectCompanyRoute,checkCompanyApprovalStatus,updateCompanyEmail);
