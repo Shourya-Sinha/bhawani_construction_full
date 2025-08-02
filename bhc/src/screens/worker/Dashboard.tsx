@@ -1,19 +1,46 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import { colors } from '../../styles/colors';
-import { glassStyles } from '../../styles/glassmorphism';
 import ProjectStatus from '../../components/ProjectStatus';
+import { useAppDispatch, useAppSelector } from '../../redux/store';
+import GradientButton from '../../components/GradientButton';
+import { WorkerLogout } from '../../redux/slices/Worker/workerAuthSlice';
+import { useFocusEffect } from '@react-navigation/core';
 
-const WorkerDashboard = () => {
+const WorkerDashboard = ({ navigation }: any) => {
+  const dispatch = useAppDispatch();
+  const { user,isLoggedIn } = useAppSelector(state => state.workerAuth);
+  // console.log('user info in worker dashboard', user);
+useFocusEffect(
+  useCallback(() => {
+    if (!isLoggedIn) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'WorkerLogin' }],
+      });
+    }
+  }, [isLoggedIn])
+);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(WorkerLogout());
+      console.log('Worker logurt success');
+    } catch (error) {
+      console.error('Worker logout failed', error);
+    }
+  };
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <GlassCard style={styles.headerCard}>
-          <Text style={styles.title}>Worker Dashboard</Text>
-          <Text style={styles.subtitle}>Welcome back, Vikram!</Text>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.subtitle}>
+            Welcome back, {user?.fullName || user?.googleName || 'N/A'}!
+          </Text>
         </GlassCard>
-        
+
         <GlassCard style={styles.statsCard}>
           <View style={styles.statRow}>
             <StatItem value="2" label="Active Projects" />
@@ -23,22 +50,17 @@ const WorkerDashboard = () => {
             <StatItem value="92%" label="Completion Rate" />
             <StatItem value="4.8" label="Rating" />
           </View>
+          <View>
+            <GradientButton title="Logout" onPress={handleLogout} />
+          </View>
         </GlassCard>
-        
+
         <GlassCard style={styles.projectCard}>
           <Text style={styles.sectionTitle}>Current Projects</Text>
-          
-          <ProjectItem 
-            name="Office Building" 
-            status="running" 
-            progress={65} 
-          />
-          
-          <ProjectItem 
-            name="Hospital" 
-            status="running" 
-            progress={45} 
-          />
+
+          <ProjectItem name="Office Building" status="running" progress={65} />
+
+          <ProjectItem name="Hospital" status="running" progress={45} />
         </GlassCard>
       </ScrollView>
     </View>
@@ -52,10 +74,14 @@ const StatItem = ({ value, label }: { value: string; label: string }) => (
   </View>
 );
 
-const ProjectItem = ({ name, status, progress }: { 
-  name: string; 
-  status: string; 
-  progress: number; 
+const ProjectItem = ({
+  name,
+  status,
+  progress,
+}: {
+  name: string;
+  status: string;
+  progress: number;
 }) => (
   <View style={styles.projectItem}>
     <Text style={styles.projectName}>{name}</Text>
@@ -97,6 +123,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
+    textTransform: 'capitalize',
   },
   sectionTitle: {
     fontSize: 20,

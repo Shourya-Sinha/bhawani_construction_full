@@ -215,14 +215,14 @@ const HomeScreen = ({ navigation }: any) => {
             <View style={styles.ctaContainer}>
               <TouchableOpacity 
                 style={styles.ctaButton}
-                onPress={() => navigation.navigate('CompanyRegister')}
+                onPress={() => navigation.navigate('CompanyLogin')}
               >
-                <Text style={styles.ctaText}>Register as Company</Text>
+                <Text style={styles.ctaText}>Login as Company</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={[styles.ctaButton, styles.secondaryCta]}
-                onPress={() => navigation.navigate('WorkerRegister')}
+                onPress={() => navigation.navigate('WorkerLogin')}
               >
                 <Text style={[styles.ctaText, { color: colors.primary }]}>Join as Worker</Text>
               </TouchableOpacity>
@@ -431,8 +431,8 @@ const styles = StyleSheet.create({
     height: 55,
     backgroundColor: colors.primary,
     borderRadius: 25,
-    // paddingVertical: 15,
-    marginHorizontal: 5,
+    paddingVertical: 15,
+    marginHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: colors.primary,

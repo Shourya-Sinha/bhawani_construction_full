@@ -11,10 +11,10 @@ import GlassCard from '../../../components/GlassCard';
 import GradientButton from '../../../components/GradientButton';
 import { colors } from '../../../styles/colors';
 import { useAppDispatch } from '../../../redux/store';
-import { VerifyEmailCompanySlice } from '../../../redux/slices/Company/companyAuthSlice';
 import ShowLogoPage from '../../main/ShowLogoPage';
+import { VerifyEmailWorkerSlice } from '../../../redux/slices/Worker/workerAuthSlice';
 
-const VerifyEmail = ({ navigation, route }: any) => {
+const WorkerVerifyEmail = ({ navigation, route }: any) => {
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
   const { email: passedEmail } = route.params || {};
@@ -33,10 +33,10 @@ const VerifyEmail = ({ navigation, route }: any) => {
 
     try {
       setLoading(true);
-      const result = await dispatch(VerifyEmailCompanySlice(formValues));
+      const result = await dispatch(VerifyEmailWorkerSlice(formValues));
 
       if (result.success) {
-        navigation.navigate('CompanyDashboard');
+        navigation.navigate('WorkerDashboard');
       } else {
         Alert.alert(
           'Email Verification Failed',
@@ -128,4 +128,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default VerifyEmail;
+export default WorkerVerifyEmail;

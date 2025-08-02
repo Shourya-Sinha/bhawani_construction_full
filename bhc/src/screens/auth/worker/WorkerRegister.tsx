@@ -1,27 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import GradientButton from '../../../components/GradientButton';
 import { colors } from '../../../styles/colors';
-import { glassStyles } from '../../../styles/glassmorphism';
+import ShowLogoPage from '../../main/ShowLogoPage';
+import { useAppDispatch, useAppSelector } from '../../../redux/store';
+import { RegisterWorkerSlice } from '../../../redux/slices/Worker/workerAuthSlice';
 
 const WorkerRegister = ({ navigation }: any) => {
+  const { isLoggedIn } = useAppSelector(state => state.workerAuth);
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [skills, setSkills] = useState('');
 
-  const handleRegister = () => {
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigation.navigate('WorkerDashboard');
+    }
+  }, [isLoggedIn]);
+
+  const handleRegister = async () => {
     // Registration logic
-    navigation.navigate('WorkerDashboard');
+    if (!name || !email || !password || !confirmPassword || !userName) {
+      Alert.alert('Please fill all the fields');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Password do not match');
+      return;
+    }
+    const formValues = {
+      email,
+      password,
+      userName,
+      fullName: name,
+    };
+    try {
+      setLoading(true);
+      const result = await dispatch(RegisterWorkerSlice(formValues));
+      if (result.success) {
+        navigation.navigate('WorkerVerifyEmail', { email });
+      } else {
+        Alert.alert(result?.message || 'Registration Failed');
+      }
+    } catch (error: any) {
+      Alert.alert(error?.message || 'Registraiton Failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
+      {/* Centered Animated Logo */}
+      <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Worker Registration</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="Full Name"
@@ -29,7 +75,15 @@ const WorkerRegister = ({ navigation }: any) => {
           value={name}
           onChangeText={setName}
         />
-        
+
+        <TextInput
+          style={styles.input}
+          placeholder="UserName (unique)"
+          placeholderTextColor={colors.textSecondary}
+          value={userName}
+          onChangeText={setUserName}
+        />
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -38,7 +92,7 @@ const WorkerRegister = ({ navigation }: any) => {
           value={email}
           onChangeText={setEmail}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -47,7 +101,7 @@ const WorkerRegister = ({ navigation }: any) => {
           value={password}
           onChangeText={setPassword}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Confirm Password"
@@ -56,21 +110,17 @@ const WorkerRegister = ({ navigation }: any) => {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Skills (comma separated)"
-          placeholderTextColor={colors.textSecondary}
-          value={skills}
-          onChangeText={setSkills}
+
+        <GradientButton
+          title="Register"
+          onPress={handleRegister}
+          style={styles.button}
+          loading={loading}
+          disabled={
+            loading || !email || !password || !userName || !confirmPassword
+          }
         />
-        
-        <GradientButton 
-          title="Register" 
-          onPress={handleRegister} 
-          style={styles.button} 
-        />
-        
+
         <TouchableOpacity onPress={() => navigation.navigate('WorkerLogin')}>
           <Text style={styles.link}>Already have an account? Login</Text>
         </TouchableOpacity>

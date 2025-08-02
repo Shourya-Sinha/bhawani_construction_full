@@ -1,10 +1,12 @@
 import Company from "../../models/Company.js";
 import Project from "../../models/Project.js";
 import Worker from "../../models/Worker.js";
+import { deleteFile, uploadIDFileFromStream, uploadIntroVideoFileFromStream, uploadProfilePicFromStream } from "../../Service/Imagekit.js";
 import sendMail from "../../Service/Mailer.js";
 import filterObj from "../../utils/Filter.js";
 import { apiResponse, errors } from "../../utils/GlobalErrorHandler.js";
-import { tokenGeneratorForWorker, validateFileType } from "./workerMiddleware.js";
+import { LogError } from "../../utils/GlobalLogging.js";
+import { filterFiles, tokenGeneratorForWorker, validateFileType } from "./workerMiddleware.js";
 
 
 // Update Email
@@ -87,81 +89,72 @@ export const updateBasicInfo = async (req, res) => {
         const user = await Worker.findById(req.userId);
         if (!user) return errors.notFound(res, "User not found");
 
-        const filteredBody = filterObj(req.body, "userName", "phone", "fullName")
-
-        const { userName, phone, fullName } = filteredBody;
-
+        const filteredFiles = filterFiles(req.files || {}, "idProof", "introVideo", "profilePic");
+        const { idProof, introVideo, profilePic } = filteredFiles;
+        const { userName, phone, fullName } = req.body || {};
         if (userName) user.userName = userName;
         if (phone) user.phone = phone;
         if (fullName) user.fullName = fullName;
 
-        const filterFile = validateFileType(req.files, "idProof", "introVideo", "profilePic");
-
-        const { idProof, introVideo, profilePic } = filterFile;
-
         // File uploads
         if (idProof) {
-            // ID Proof
-            if (req.files.idProof) {
-                const idProofFile = idProof[0];
-                if (!idProofFile.mimetype.includes("pdf")) {
-                    return errors.badRequest(res, "Only PDF allowed for ID Proof");
-                }
-
-                if (user.idProof?.fileId) await deleteFile(user.idProof.fileId);
-
-                const uploaded = await uploadIDFileFromStream(
-                    idProofFile.stream,
-                    `id_${user._id}_${Date.now()}`
-                );
-                user.idProof = { url: uploaded.url, fileId: uploaded.fileId };
+            const idProofFile = idProof[0];
+            if (!validateFileType(idProofFile.originalname, 'document')) {
+                return errors.badRequest(res, "Only PDF allowed for ID Proof");
             }
+            if (user.idProof?.fileId) await deleteFile(user.idProof.fileId);
 
-            // Intro Video
-            if (introVideo) {
-                const introVideoFile = introVideo[0];
-                if (!introVideoFile.mimetype.includes("mp4")) {
-                    return errors.badRequest(res, "Only MP4 allowed for intro video");
-                }
-
-                if (user.introVideo?.fileId) await deleteFile(user.introVideo.fileId);
-
-                const uploaded = await uploadIntroVideoFileFromStream(
-                    introVideoFile.stream,
-                    `intro_${user._id}_${Date.now()}`
-                );
-                user.introVideo = { url: uploaded.url, fileId: uploaded.fileId };
-            }
-
-            // Profile Pic
-            if (profilePic) {
-                const profilePicFile = profilePic[0];
-                if (!["image/jpeg", "image/jpg"].includes(profilePicFile.mimetype)) {
-                    return errors.badRequest(res, "Only JPG or JPEG allowed for profile picture");
-                }
-
-                if (user.profilePic?.fileId) await deleteFile(user.profilePic.fileId);
-
-                const uploaded = await uploadProfilePicFromStream(
-                    profilePicFile.stream,
-                    `profile_${user._id}_${Date.now()}`
-                );
-                user.profilePic = { url: uploaded.url, fileId: uploaded.fileId };
-            }
+            const uploaded = await uploadIDFileFromStream(
+                idProofFile.stream,
+                `id_${user._id}_${Date.now()}`
+            );
+            user.idProof = { url: uploaded.url, fileId: uploaded.fileId };
         }
-        user.updatedAt = new Date();
-        await user.save();
-        return apiResponse(200, "Profile updated successfully", {
-            userName: user.userName,
-            phone: user.phone,
-            fullName: user.fullName,
-            email: user.email,
-            profilePic: user.profilePic,
-        });
-    } catch (err) {
-        LogError("updateBasicInfo", err);
-        return errors.serverError(res, "Error updating profile");
-    }
+
+        // Intro Video
+        if (introVideo) {
+            const introVideoFile = introVideo[0];
+            if (!validateFileType(introVideoFile.originalname, 'video')) {
+                return errors.badRequest(res, "Only MP4 allowed for intro video");
+            }
+            if (user.introVideo?.fileId) await deleteFile(user.introVideo.fileId);
+
+            const uploaded = await uploadIntroVideoFileFromStream(
+                introVideoFile.stream,
+                `intro_${user._id}_${Date.now()}`
+            );
+            user.introVideo = { url: uploaded.url, fileId: uploaded.fileId };
+        }
+
+        // Profile Pic
+        if (profilePic) {
+            const profilePicFile = profilePic[0];
+            if (!validateFileType(profilePicFile.originalname, 'image')) {
+                return errors.badRequest(res, "Only JPG or JPEG allowed for profile picture");
+            }
+            if (user.profilePic?.fileId) await deleteFile(user.profilePic.fileId);
+
+            const uploaded = await uploadProfilePicFromStream(
+                profilePicFile.buffer,
+                `profile_${user._id}_${Date.now()}`
+            );
+            user.profilePic = { url: uploaded.url, fileId: uploaded.fileId };
+        }
+    user.updatedAt = new Date();
+    await user.save();
+    return apiResponse(res,200, "Profile updated successfully", {
+        userName: user.userName || null,
+        phone: user.phone || null,
+        fullName: user.fullName || null,
+        email: user.email || null,
+        profilePic: user.profilePic || null,
+        introVideo: user.introVideo || null,
+        idProof: user.idProof || null,
+    });
+} catch (err) {
+    LogError("updateBasicInfo", err);
+    return errors.serverError(res, "Error updating profile");
+}
 };
 
 export const updateSkillsExperience = async (req, res) => {

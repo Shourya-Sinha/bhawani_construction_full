@@ -59,28 +59,42 @@ export const uploadIntroVideoFileFromStream = async (stream, fileName, options =
     });
 };
 
-export const uploadProfilePicFromStream = async (stream, fileName, options = {}) => {
-    return new Promise((resolve, reject) => {
-        const chunks = [];
+// export const uploadProfilePicFromStream = async (stream, fileName, options = {}) => {
+//     return new Promise((resolve, reject) => {
+//         const chunks = [];
 
-        stream
-            .on('data', (chunk) => chunks.push(chunk))
-            .on('end', async () => {
-                try {
-                    const buffer = Buffer.concat(chunks);
-                    const result = await imagekit.upload({
-                        file: buffer,
-                        fileName,
-                        folder: "/BHCFamily/Worker/ProfilePic",
-                        ...options
-                    });
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                }
-            })
-            .on('error', reject);
-    });
+//         stream
+//             .on('data', (chunk) => chunks.push(chunk))
+//             .on('end', async () => {
+//                 try {
+//                     const buffer = Buffer.concat(chunks);
+//                     const result = await imagekit.upload({
+//                         file: buffer,
+//                         fileName,
+//                         folder: "/BHCFamily/Worker/ProfilePic",
+//                         ...options
+//                     });
+//                     resolve(result);
+//                 } catch (error) {
+//                     reject(error);
+//                 }
+//             })
+//             .on('error', reject);
+//     });
+// };
+
+export const uploadProfilePicFromStream = async (buffer, fileName, options = {}) => {
+    try {
+        const result = await imagekit.upload({
+            file: buffer,
+            fileName,
+            folder: "/BHCFamily/Worker/ProfilePic",
+            ...options
+        });
+        return result;
+    } catch (error) {
+        throw error;
+    }
 };
 
 

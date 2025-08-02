@@ -12,10 +12,10 @@ import { colors } from '../../../styles/colors';
 import GradientButton from '../../../components/GradientButton';
 import { useAppDispatch, useAppSelector } from '../../../redux/store';
 import { LoginCompanySlice } from '../../../redux/slices/Company/companyAuthSlice';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const CompanyLogin = ({ navigation }: any) => {
   const { isLoggedIn } = useAppSelector(state => state.companyAuth);
-  console.log("check isloggedin state in login page:-",isLoggedIn);
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState('');
@@ -64,6 +64,8 @@ const CompanyLogin = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+    {/* Centered Animated Logo */}
+       <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Company Login</Text>
 
@@ -108,6 +110,7 @@ const CompanyLogin = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: colors.background,

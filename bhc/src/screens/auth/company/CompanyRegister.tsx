@@ -12,6 +12,7 @@ import { colors } from '../../../styles/colors';
 import GradientButton from '../../../components/GradientButton';
 import { RegisterCompanySlice } from '../../../redux/slices/Company/companyAuthSlice';
 import { useAppDispatch, useAppSelector } from '../../../redux/store';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const CompanyRegister = ({ navigation }: any) => {
   const { isLoggedIn } = useAppSelector(state => state.companyAuth);
@@ -62,6 +63,8 @@ const CompanyRegister = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+          {/* Centered Animated Logo */}
+       <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Company Registration</Text>
 

@@ -1,6 +1,9 @@
+import { NavigatorScreenParams } from "@react-navigation/core";
+
 export type RootStackParamList = {
   // Add all your routes here
-  MainTabs: undefined;
+  // MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
   CompanyLogin: undefined;
   CompanyRegister: undefined;
   ForgotPassword: undefined;
@@ -13,7 +16,14 @@ export type RootStackParamList = {
   WorkerDashboard: undefined;
   EditCompanyProfile: undefined; // Add this line
   CompanyVerifyEmail:undefined;
+  WorkerVerifyEmail:undefined;
   // ... other routes
+};
+
+export type MainTabParamList = {
+  Home: undefined;
+  Stats: undefined;
+  CompanyProfile: undefined;
 };
 
 declare global {

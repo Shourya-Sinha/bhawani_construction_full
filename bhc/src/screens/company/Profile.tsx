@@ -35,7 +35,7 @@ const CompanyProfile = () => {
       await dispatch(getandsetCompanyinfo());
     } catch (error) {
       console.log('Error fetching profile info:', error);
-      Alert.alert('Something went wrong while fetching company info');
+      // Alert.alert('Something went wrong while fetching company info');
     }
   }, [dispatch]);
 
@@ -155,11 +155,12 @@ const CompanyProfile = () => {
               </View>
             ))}
           </View>
+          <GradientButton title="Logout" onPress={handleLogout} />
         </GlassCard>
 
         {/* Contact Information */}
         <GlassCard style={styles.card}>
-        <GradientButton title="Logout" onPress={handleLogout} />
+        
           <Text style={styles.sectionTitle}>Contact Information</Text>
 
           <InfoItem icon="email" label={companyData.email} />

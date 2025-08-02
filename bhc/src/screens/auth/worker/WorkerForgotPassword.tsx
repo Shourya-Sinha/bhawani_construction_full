@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import GradientButton from '../../../components/GradientButton';
 import { colors } from '../../../styles/colors';
 import { glassStyles } from '../../../styles/glassmorphism';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const WorkerForgotPassword = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -15,10 +22,14 @@ const WorkerForgotPassword = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+      {/* Centered Animated Logo */}
+      <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.subtitle}>Enter your email to reset your password</Text>
-        
+        <Text style={styles.subtitle}>
+          Enter your email to reset your password
+        </Text>
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -27,13 +38,13 @@ const WorkerForgotPassword = ({ navigation }: any) => {
           value={email}
           onChangeText={setEmail}
         />
-        
-        <GradientButton 
-          title="Send Reset Link" 
-          onPress={handleReset} 
-          style={styles.button} 
+
+        <GradientButton
+          title="Send Reset Link"
+          onPress={handleReset}
+          style={styles.button}
         />
-        
+
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.link}>Back to Login</Text>
         </TouchableOpacity>

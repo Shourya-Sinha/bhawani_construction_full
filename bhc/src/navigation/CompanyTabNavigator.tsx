@@ -5,7 +5,7 @@ import CompanyProjects from '../screens/company/Projects';
 import CompanyProfile from '../screens/company/Profile';
 import TabBar from '../components/TabBar';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { ColorValue } from 'react-native';
+import { ColorValue, Text, View } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,6 +22,7 @@ const CompanyTabNavigator = () => {
     }) => <Icon name={iconName} size={size} color={color} />;
   };
   return (
+    
     <Tab.Navigator
       tabBar={props => <TabBar {...props} />}
       screenOptions={{

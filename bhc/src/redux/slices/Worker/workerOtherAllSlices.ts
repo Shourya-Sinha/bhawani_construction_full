@@ -44,9 +44,10 @@ const initialState: StateType = {
 };
 
 const slice = createSlice({
-    name: 'workerAllOther',
+    name: 'workerOther',
     initialState,
     reducers: {
+        resetState: () => initialState,
         updateIsLoading(state, action: { payload: { isLoading: boolean, error: boolean } }) {
             state.error = action.payload.error;
             state.isLoading = action.payload.isLoading;
@@ -232,12 +233,16 @@ export function WorkerUpdateEmailSlice(formValues: UpdateEmail) {
     }
 }
 
-export function WorkerUpdateInfo(formValues: UpdateInfo) {
+export function WorkerUpdateInfo(formValues: UpdateInfo | FormData) {
     return async (dispatch: any) => {
         dispatch(updateIsLoading({ isLoading: true, error: false }))
 
         try {
-            const response = await axiosInstance.put(`${workerBaseUrl}/UPDATE_WORKER_DETAIL`, formValues);
+            const response = await axiosInstance.put(`${workerBaseUrl}/UPDATE_WORKER_DETAIL`, formValues, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
             dispatch(updateIsLoading({ isLoading: false, error: false }));
             dispatch(updateWorkerInfo(response.data?.data));
             dispatch(updateUserInfo(response.data?.data));

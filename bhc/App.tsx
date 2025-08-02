@@ -7,10 +7,12 @@
 import AppNavigator from './src/navigation/AppNavigator';
 import {
   ActivityIndicator,
+  Animated,
   SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from 'react-native';
@@ -22,6 +24,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
+
   return (
     <>
       <Provider store={store}>
@@ -31,9 +34,11 @@ function App() {
               barStyle="light-content"
               backgroundColor={colors.background}
             />
+
             <AppNavigator />
           </View>
         </PersistGate>
+
       </Provider>
     </>
   );

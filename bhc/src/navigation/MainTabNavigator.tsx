@@ -5,7 +5,6 @@ import StatsScreen from '../screens/main/Stats';
 import CompanyProfile from '../screens/main/CompanyProfile';
 import TabBar from '../components/TabBar';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { ColorValue } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 

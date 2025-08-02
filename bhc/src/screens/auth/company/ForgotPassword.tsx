@@ -4,6 +4,7 @@ import GlassCard from '../../../components/GlassCard';
 import { colors } from '../../../styles/colors';
 import { glassStyles } from '../../../styles/glassmorphism';
 import GradientButton from '../../../components/GradientButton';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const ForgotPassword = ({ navigation }: any) => {
   const [email, setEmail] = useState('');
@@ -15,6 +16,8 @@ const ForgotPassword = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+          {/* Centered Animated Logo */}
+       <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Forgot Password</Text>
         <Text style={styles.subtitle}>Enter your email to reset your password</Text>

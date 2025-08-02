@@ -3,7 +3,7 @@
 import { checkCompanyApprovalStatus, protectCompanyRoute } from "../controllers/company/companyMiddleware.js";
 import { addWorkerRating, getAssignedProjects, getCompletedProjects, getWorkerLikesDislikes, getWorkerRatings, toggleDislikeWorker, toggleLikeWorker, updateBasicInfo, updateSkillsExperience, updateWorkerEmail } from "../controllers/worker/workController.js";
 import { WorkerCustomRegister, WorkerForgotPassword, WorkerLogin, WorkerLogout, WorkerResendOTP, WorkerResetPassword, WorkerVerifyEmail } from "../controllers/worker/WorkerAuthController.js";
-import { checkWorkerApprovalStatus, protectWorkerRoute } from "../controllers/worker/workerMiddleware.js";
+import { checkWorkerApprovalStatus, protectWorkerRoute, uploadWorkerFilesMulterMiddleware } from "../controllers/worker/workerMiddleware.js";
 import router, { RGET, RPOST, RPUT } from "../utils/GlobalRouter.js";
 
 //Auth
@@ -17,7 +17,7 @@ RPOST("LOGOUT_WORKER",WorkerLogout);
 
 // After Auth Flow Without Admin Approval
 RPUT("UPDATE_WORKER_EMAIL",protectWorkerRoute,updateWorkerEmail);
-RPUT("UPDATE_WORKER_DETAIL",protectWorkerRoute,updateBasicInfo);
+RPUT("UPDATE_WORKER_DETAIL",protectWorkerRoute,uploadWorkerFilesMulterMiddleware,updateBasicInfo);
 RPUT("UPDATE_WORKER_SKILLS",protectWorkerRoute,updateSkillsExperience);
 
 

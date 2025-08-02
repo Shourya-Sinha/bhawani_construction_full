@@ -68,12 +68,10 @@ export function LoginCompanySlice(formValues: LoginFormValues) {
             const response = await axiosInstance.post(`${companyBaseUrl}/COMPANY_LOGIN`, formValues);
             const token = response?.data?.data?.token;
 
-            console.log("start setiing token in asycstorage", token)
             if (token) {
                 await AsyncStorage.setItem('auth_token', token); // 👉 Ensure this happens first
                 console.log('Saved token to AsyncStorage:-', token);
             }
-            console.log("finish setiing token in asycstorage");
             dispatch(updateIsLoading({ isLoading: false, error: false }));
             dispatch(login({ user: response?.data?.data, isLoggedIn: true }));
             return response.data;
@@ -180,15 +178,9 @@ export function CompanyLogout() {
         dispatch(updateIsLoading({ isLoading: true, error: false }));
         try {
             await axiosInstance.post(`${companyBaseUrl}/COMPANY_LOGOUT`);
-            // await AsyncStorage.multiRemove(['auth_token', 'csrf_token']); // Clean multiple keys if used
-            // await persistor.purge();
 
-            // dispatch(logout())
-            // return response.data;
         } catch (error: any) {
             console.warn("Server logout failed, continuing cleanup:", error?.message);
-            // dispatch(updateIsLoading({ isLoading: false, error: true }));
-            // return Promise.reject(error);
         } finally {
             await cleanupAuth(dispatch);
             dispatch(resetState()); 

@@ -4,6 +4,7 @@ import GlassCard from '../../../components/GlassCard';
 import { colors } from '../../../styles/colors';
 import { glassStyles } from '../../../styles/glassmorphism';
 import GradientButton from '../../../components/GradientButton';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const ResetPassword = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
@@ -16,6 +17,8 @@ const ResetPassword = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+          {/* Centered Animated Logo */}
+       <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Reset Password</Text>
         

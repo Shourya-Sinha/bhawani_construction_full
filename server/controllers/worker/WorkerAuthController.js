@@ -1,10 +1,11 @@
 import Company from "../../models/Company.js";
 import Worker from "../../models/Worker.js";
+import sendMail from "../../Service/Mailer.js";
 import { createDeviceFingerprint, getClientIP } from "../../utils/DeviceFingerPrint.js";
 import filterObj from "../../utils/Filter.js";
 import { GenerateOtp } from "../../utils/generateOTP.js";
 import { apiResponse, errors } from "../../utils/GlobalErrorHandler.js";
-import { LogError } from "../../utils/GlobalLogging.js";
+import { LogData, LogError } from "../../utils/GlobalLogging.js";
 import { sendOTPWithLimit, tokenGeneratorForCompany } from "../company/companyMiddleware.js";
 import { tokenGeneratorForWorker } from "./workerMiddleware.js";
 
@@ -12,8 +13,8 @@ import { tokenGeneratorForWorker } from "./workerMiddleware.js";
 // Custom Worker Register
 export const WorkerCustomRegister = async function (req, res, next) {
     try {
-        const filteredBody = filterObj(req.body, 'email', 'password',"fullName","userName");
-        const { email, password ,fullName,userName} = filteredBody;
+        const filteredBody = filterObj(req.body, 'email', 'password', "fullName", "userName");
+        const { email, password, fullName, userName } = filteredBody;
 
         // INPUT Validation
         if (!email || !password || !fullName || !userName) {
@@ -35,7 +36,7 @@ export const WorkerCustomRegister = async function (req, res, next) {
                 return errors.conflict(res, 'Email is already registered and verified');
             }
             user.userName = userName;
-            user.fullName=fullName;
+            user.fullName = fullName;
             user.password = password;
             await sendOTPWithLimit({ user, email, purpose: 'register', req });
             return apiResponse(res, 201, 'OTP sent for verification');
@@ -147,10 +148,11 @@ export const WorkerVerifyEmail = async (req, res) => {
         });
 
         return apiResponse(res, 201, 'Email Verified successfully', {
-                email: user.email,
-                userId: user._id,
-                fullName:user.fullName,
-                userName:user.userName,
+            email: user.email,
+            userId: user._id,
+            fullName: user.fullName,
+            userName: user.userName,
+            token:newToken,
 
         });
 
@@ -236,7 +238,7 @@ export const WorkerForgotPassword = async (req, res) => {
             return errors.forbidden(res, 'Invalid Credentials');
         }
         await sendOTPWithLimit({ user, email, purpose: 'forgot', req });
-        await user.save({isModified:true});
+        await user.save({ isModified: true });
         return apiResponse(res, 200, "OTP sent successfully to your email");
     } catch (error) {
         if (error.name === 'ValidationError') {
@@ -333,7 +335,14 @@ export const WorkerLogin = async (req, res) => {
             return errors.badRequest(res, "Password length must be at least 8 characters");
         }
         // find user
-        const user = await Worker.findOne({ email });
+        let user;
+        // const user = await Company.findOne({ email });
+        if (email.includes("@")) {
+            user = await Worker.findOne({ email });
+        } else {
+            const fullUsername = email.endsWith(".BHCFamily") ? email : `${email}.BHCFamily`;
+            user = await Worker.findOne({ userName: fullUsername });
+        }
         if (!user) {
             return errors.forbidden(res, "Invalid credentials")
         }
@@ -389,14 +398,16 @@ export const WorkerLogin = async (req, res) => {
             sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // More secure than 'lax'
             maxAge: 24 * 60 * 60 * 1000,
             path: '/',
-            domain: process.env.COOKIE_DOMAIN || "localhost"
+            domain: process.env.COOKIE_DOMAIN || undefined
         });
 
         return apiResponse(res, 200, 'Login Successfull', {
             email: user.email,
             userName: user.userName || null,
             googleName: user.googleName || null,
-            fullName:user.fullName
+            fullName: user.fullName || null,
+            userId:user._id,
+            token:token
         });
     } catch (error) {
         if (error.name === "ValidationError") {

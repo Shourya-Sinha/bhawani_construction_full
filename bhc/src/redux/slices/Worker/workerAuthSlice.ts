@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axiosInstance, { workerBaseUrl } from "../../../axios/axiosInstance.ts";
 import { persistor } from "../../store.ts";
+import { resetState } from "../Company/companyAllOtherSlice.ts";
 
 const initialState = {
     isLoggedIn: false,
@@ -30,8 +31,8 @@ const slice = createSlice({
             state.error = action.payload.error;
             state.isLoading = action.payload.isLoading;
         },
-        updateWorkerInfo(state,action){
-            state.user={
+        updateWorkerInfo(state, action) {
+            state.user = {
                 ...state.user,
                 ...action.payload
             }
@@ -41,7 +42,7 @@ const slice = createSlice({
 
 export default slice.reducer;
 export const {
-    login, logout, updateIsLoading,updateWorkerInfo
+    login, logout, updateIsLoading, updateWorkerInfo
 } = slice.actions;
 
 interface LoginFormValues {
@@ -71,10 +72,14 @@ export function LoginWorkerSlice(formValues: LoginFormValues) {
 
         try {
             const response = await axiosInstance.post(`${workerBaseUrl}/LOGIN_WORKER`, formValues);
-
+            const token = response?.data?.data?.token;
+            if (token) {
+                await AsyncStorage.setItem('auth_token', token); // 👉 Ensure this happens first
+                console.log('Saved token to AsyncStorage:-', token);
+            }
             dispatch(updateIsLoading({ isLoading: false, error: false }));
             dispatch(login({ user: response?.data?.data, isLoggedIn: true }));
-
+            dispatch(updateWorkerInfo(response?.data?.data));
             return response.data;
         } catch (error) {
             dispatch(updateIsLoading({ isLoading: false, error: true }));
@@ -92,7 +97,7 @@ export function RegisterWorkerSlice(formValues: RegisterFormValues) {
 
             dispatch(updateIsLoading({ isLoading: false, error: false }));
 
-            return true;
+            return response.data;
         } catch (error) {
             dispatch(updateIsLoading({ isLoading: false, error: true }));
             return Promise.reject(error);
@@ -108,6 +113,7 @@ export function VerifyEmailWorkerSlice(formValues: VerifyEmailFormValues) {
             const response = await axiosInstance.post(`${workerBaseUrl}/VERIFY_EMAIL_WORKER`, formValues);
             dispatch(login({ user: response?.data?.data, isLoggedIn: true }));
             dispatch(updateIsLoading({ isLoading: false, error: false }));
+            dispatch(updateWorkerInfo(response?.data?.data));
 
             return response.data;
         } catch (error) {
@@ -167,20 +173,22 @@ export function ResetPWDWorkerSlice(formValues: ResetPWDFormValues) {
         }
     }
 }
-
+const cleanupAuth = async (dispatch: any) => {
+    await AsyncStorage.multiRemove(['auth_token', 'csrf_token']);
+    await persistor.purge();
+    dispatch(logout());
+};
 export function WorkerLogout() {
     return async (dispatch: any) => {
         dispatch(updateIsLoading({ isLoading: true, error: false }));
         try {
-            const response = await axiosInstance.post(`${workerBaseUrl}/LOGOUT_WORKER`);
-            await AsyncStorage.multiRemove(['auth_token', 'csrf_token']); // Clean multiple keys if used
-            await persistor.purge();
-
-            dispatch(logout())
-            return true;
+            await axiosInstance.post(`${workerBaseUrl}/LOGOUT_WORKER`);
         } catch (error) {
-            dispatch(updateIsLoading({ isLoading: false, error: true }));
-            return Promise.reject(error);
+            console.warn("Server Logout Failed")
+        } finally {
+            await cleanupAuth(dispatch);
+            dispatch(resetState());
+            dispatch(updateIsLoading({ isLoading: false, error: false }));
         }
     }
 }

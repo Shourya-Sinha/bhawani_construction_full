@@ -12,7 +12,7 @@ import { colors } from '../../styles/colors';
 import ProjectStatus from '../../components/ProjectStatus';
 import { useAppDispatch, useAppSelector } from '../../redux/store';
 import { getandsetCompanyinfo } from '../../redux/slices/Company/companyAllOtherSlice';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CompanyLogout } from '../../redux/slices/Company/companyAuthSlice';
 
@@ -22,10 +22,12 @@ const CompanyDashboard = ({ navigation }: any) => {
   const [refreshing, setRefreshing] = useState(false);
   const fetchData = useCallback(async () => {
     try {
-      await dispatch(getandsetCompanyinfo());
+      if (isLoggedIn) {
+        await dispatch(getandsetCompanyinfo());
+      }
     } catch (error) {
       console.log('Error fetching profile info:', error);
-      Alert.alert('Something went wrong while fetching company info');
+      // Alert.alert('Something went wrong while fetching company info');
     }
   }, [dispatch]);
 
@@ -35,7 +37,7 @@ const CompanyDashboard = ({ navigation }: any) => {
   useEffect(() => {
     const checkTokenExpiry = async () => {
       try {
-        const token = await AsyncStorage.getItem('auth_token');// or AsyncStorage for React Native
+        const token = await AsyncStorage.getItem('auth_token'); // or AsyncStorage for React Native
         if (token) {
           const decoded: any = jwtDecode(token);
           const currentTime = Date.now() / 1000;

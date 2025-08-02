@@ -1,24 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import GradientButton from '../../../components/GradientButton';
 import { colors } from '../../../styles/colors';
 import { glassStyles } from '../../../styles/glassmorphism';
+import ShowLogoPage from '../../main/ShowLogoPage';
+import { useAppDispatch, useAppSelector } from '../../../redux/store';
+import { LoginWorkerSlice } from '../../../redux/slices/Worker/workerAuthSlice';
 
 const WorkerLogin = ({ navigation }: any) => {
+  const dispatch = useAppDispatch();
+  const { isLoggedIn } = useAppSelector(state => state.workerAuth);
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigation.navigate('CompanyDashboard');
+    }
+  }, [isLoggedIn]);
+
+  const handleLogin = async () => {
     // Login logic
-    navigation.navigate('WorkerDashboard');
+    let loginIdentifier = email.trim();
+    if (
+      !loginIdentifier.includes('@') &&
+      !loginIdentifier.endsWith('.BHCFamily')
+    ) {
+      loginIdentifier = `${loginIdentifier}.BHCFamily`;
+    }
+    if (!loginIdentifier || !password) {
+      Alert.alert('All Fields Required');
+      return;
+    }
+    try {
+      setLoading(true);
+      const formValues = {
+        email: loginIdentifier,
+        password,
+      };
+      const result = await dispatch(LoginWorkerSlice(formValues));
+      if (result?.success) {
+        navigation.navigate('WorkerDashboard');
+      } else {
+        Alert.alert(result?.message || 'Login Error');
+      }
+    } catch (error: any) {
+      console.error('Login Error form worker login Page', error);
+      Alert.alert(error?.message || 'Login Error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
+      {/* Centered Animated Logo */}
+      <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Worker Login</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -27,7 +76,7 @@ const WorkerLogin = ({ navigation }: any) => {
           value={email}
           onChangeText={setEmail}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -36,17 +85,21 @@ const WorkerLogin = ({ navigation }: any) => {
           value={password}
           onChangeText={setPassword}
         />
-        
-        <GradientButton 
-          title="Login" 
-          onPress={handleLogin} 
-          style={styles.button} 
+
+        <GradientButton
+          title="Login"
+          onPress={handleLogin}
+          style={styles.button}
+          loading={loading}
+          disabled={loading || !email || !password}
         />
-        
-        <TouchableOpacity onPress={() => navigation.navigate('WorkerForgotPassword')}>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('WorkerForgotPassword')}
+        >
           <Text style={styles.link}>Forgot Password?</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity onPress={() => navigation.navigate('WorkerRegister')}>
           <Text style={styles.link}>Don't have an account? Register</Text>
         </TouchableOpacity>

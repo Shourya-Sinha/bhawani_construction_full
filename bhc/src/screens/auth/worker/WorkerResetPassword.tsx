@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import GradientButton from '../../../components/GradientButton';
 import { colors } from '../../../styles/colors';
-import { glassStyles } from '../../../styles/glassmorphism';
+import ShowLogoPage from '../../main/ShowLogoPage';
 
 const WorkerResetPassword = ({ navigation }: any) => {
   const [password, setPassword] = useState('');
@@ -16,9 +22,11 @@ const WorkerResetPassword = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+      {/* Centered Animated Logo */}
+      <ShowLogoPage />
       <GlassCard style={styles.card}>
         <Text style={styles.title}>Reset Password</Text>
-        
+
         <TextInput
           style={styles.input}
           placeholder="New Password"
@@ -27,7 +35,7 @@ const WorkerResetPassword = ({ navigation }: any) => {
           value={password}
           onChangeText={setPassword}
         />
-        
+
         <TextInput
           style={styles.input}
           placeholder="Confirm New Password"
@@ -36,11 +44,11 @@ const WorkerResetPassword = ({ navigation }: any) => {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
-        
-        <GradientButton 
-          title="Reset Password" 
-          onPress={handleReset} 
-          style={styles.button} 
+
+        <GradientButton
+          title="Reset Password"
+          onPress={handleReset}
+          style={styles.button}
         />
       </GlassCard>
     </View>
